@@ -7,11 +7,13 @@ import {
   Tooltip,
   Badge,
   Collapse,
+  Chip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import HotelIcon from '@mui/icons-material/Hotel';
 import MinimizeIcon from '@mui/icons-material/Remove';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import TimerIcon from '@mui/icons-material/Timer';
 import type { ChatMessage } from '../types/chat';
 import { abandonedCartItems } from '../data/mockCartData';
 import {
@@ -21,12 +23,18 @@ import {
   createUserTextMessage,
   handleUserInput,
   getInitialState,
+  createCartExpiryWarningMessage,
+  createCartExpiredMessage,
   type RebookState,
 } from '../utils/chatbotLogic';
 import ChatBubble from './ChatBubble';
 import ChatInput from './ChatInput';
 
 const TYPING_DELAY_MS = 600;
+/** Total cart lifetime in seconds (3 minutes for demo purposes). */
+const CART_EXPIRY_SECONDS = 3 * 60;
+/** Seconds before expiry at which to fire the proactive warning. */
+const EXPIRY_WARNING_THRESHOLD = 90;
 
 const ChatbotWidget: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -35,8 +43,11 @@ const ChatbotWidget: React.FC = () => {
   const [state, setState] = useState<RebookState>(getInitialState());
   const [optionsDisabled, setOptionsDisabled] = useState<Set<string>>(new Set());
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(CART_EXPIRY_SECONDS);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
+  const warningFired = useRef(false);
+  const expiredFired = useRef(false);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -45,6 +56,45 @@ const ChatbotWidget: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping, scrollToBottom]);
+
+  // Cart expiry countdown — stops once cart is booked or expired
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSecondsLeft((prev) => {
+        const next = prev - 1;
+
+        if (next <= EXPIRY_WARNING_THRESHOLD && !warningFired.current) {
+          warningFired.current = true;
+          // Auto-open the widget so the user sees the warning
+          setOpen(true);
+          setHasInitialized(true);
+          const warningMsg = createCartExpiryWarningMessage();
+          setMessages((msgs) => [...msgs, warningMsg]);
+        }
+
+        if (next <= 0 && !expiredFired.current) {
+          expiredFired.current = true;
+          setOpen(true);
+          const expiredMsg = createCartExpiredMessage();
+          setMessages((msgs) => [...msgs, expiredMsg]);
+          clearInterval(interval);
+          return 0;
+        }
+
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Stop the countdown once the booking is complete
+  useEffect(() => {
+    if (state.step === 'booked') {
+      warningFired.current = true;
+      expiredFired.current = true;
+    }
+  }, [state.step]);
 
   const enqueueBotMessages = useCallback(
     (newMessages: ChatMessage[], onDone?: () => void) => {
@@ -137,6 +187,14 @@ const ChatbotWidget: React.FC = () => {
   const handleOpen = () => setOpen(true);
 
   const unreadCount = !open && hasInitialized ? messages.length : 0;
+  const isExpiringSoon = secondsLeft <= EXPIRY_WARNING_THRESHOLD && secondsLeft > 0;
+  const isExpired = secondsLeft <= 0;
+
+  const formatCountdown = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`;
+  };
 
   return (
     <>
@@ -159,17 +217,26 @@ const ChatbotWidget: React.FC = () => {
               sx={{
                 width: 60,
                 height: 60,
-                bgcolor: 'primary.main',
+                bgcolor: isExpiringSoon ? 'error.main' : 'primary.main',
                 color: 'white',
                 boxShadow: 4,
+                animation: isExpiringSoon ? 'pulse 1.5s infinite' : 'none',
+                '@keyframes pulse': {
+                  '0%, 100%': { boxShadow: '0 0 0 0 rgba(211,47,47,0.4)' },
+                  '50%': { boxShadow: '0 0 0 10px rgba(211,47,47,0)' },
+                },
                 '&:hover': {
-                  bgcolor: 'primary.dark',
+                  bgcolor: isExpiringSoon ? 'error.dark' : 'primary.dark',
                   transform: 'scale(1.05)',
                 },
-                transition: 'all 0.2s ease',
+                transition: 'background-color 0.3s ease, transform 0.2s ease',
               }}
             >
-              <ShoppingCartIcon sx={{ fontSize: 26 }} />
+              {isExpiringSoon ? (
+                <TimerIcon sx={{ fontSize: 26 }} />
+              ) : (
+                <ShoppingCartIcon sx={{ fontSize: 26 }} />
+              )}
             </IconButton>
           </Badge>
         </Tooltip>
@@ -200,13 +267,14 @@ const ChatbotWidget: React.FC = () => {
           {/* Header */}
           <Box
             sx={{
-              bgcolor: 'primary.main',
+              bgcolor: isExpiringSoon ? 'error.dark' : 'primary.main',
               px: 2,
               py: 1.5,
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
               flexShrink: 0,
+              transition: 'background-color 0.4s ease',
             }}
           >
             <Box
@@ -238,6 +306,36 @@ const ChatbotWidget: React.FC = () => {
                 {isTyping ? 'Typing…' : 'Online · Ready to help'}
               </Typography>
             </Box>
+            {isExpiringSoon && !isExpired && (
+              <Chip
+                icon={<TimerIcon sx={{ fontSize: '14px !important', color: 'white !important' }} />}
+                label={`Cart expires: ${formatCountdown(secondsLeft)}`}
+                size="small"
+                sx={{
+                  bgcolor: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  fontWeight: 700,
+                  fontSize: '0.7rem',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  animation: 'blink 1s step-start infinite',
+                  '@keyframes blink': {
+                    '50%': { opacity: 0.6 },
+                  },
+                }}
+              />
+            )}
+            {isExpired && (
+              <Chip
+                label="Cart Expired"
+                size="small"
+                sx={{
+                  bgcolor: 'rgba(0,0,0,0.3)',
+                  color: 'rgba(255,255,255,0.8)',
+                  fontWeight: 700,
+                  fontSize: '0.7rem',
+                }}
+              />
+            )}
             <Tooltip title="Minimize">
               <IconButton size="small" onClick={handleClose} sx={{ color: 'white' }}>
                 <MinimizeIcon fontSize="small" />

@@ -63,6 +63,22 @@ export function createBookingConfirmationMessage(
   };
 }
 
+export function createCartExpiryWarningMessage(): ChatMessage {
+  return createOptionsMessage(
+    '⏰ **Your cart expires in 90 seconds!** Complete your booking now to secure your rate and room.',
+    [
+      { label: '🏨 Book Now', value: 'book-now' },
+      { label: '⏭️ Remind Me Later', value: 'remind-later' },
+    ],
+  );
+}
+
+export function createCartExpiredMessage(): ChatMessage {
+  return createBotTextMessage(
+    '🚨 **Your cart has expired.** Your saved rates are no longer guaranteed. Start a new search to check current availability.',
+  );
+}
+
 function generateConfirmationNumber(): string {
   return 'MRW' + Math.random().toString(36).toUpperCase().slice(2, 9);
 }
@@ -163,6 +179,32 @@ export function handleUserInput(
   const messages: ChatMessage[] = [];
   const newState = { ...state };
   const input = userInput.trim().toLowerCase();
+
+  // Handle expiry-warning quick replies regardless of current step
+  if (input === 'book-now') {
+    if (state.step === 'show-cart' || state.step === 'greeting') {
+      // Jump straight to cart selection
+      messages.push(
+        createBotTextMessage("Let's get you booked right away! Which property would you like?"),
+        getCartSelectionOptions(cartItems),
+      );
+      newState.step = 'show-cart';
+    } else {
+      messages.push(
+        createBotTextMessage("Let's keep going — you're almost there! 🏨"),
+      );
+    }
+    return { messages, newState };
+  }
+
+  if (input === 'remind-later') {
+    messages.push(
+      createBotTextMessage(
+        "No problem! Just be sure to complete your booking before your cart expires. I'll be here when you're ready. 😊",
+      ),
+    );
+    return { messages, newState };
+  }
 
   switch (state.step) {
     case 'show-cart': {
