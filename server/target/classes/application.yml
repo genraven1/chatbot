@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: codefest-cart-recovery
+
+# Cart lifecycle timing. Demo defaults are 30s / 90s so the popup fires live;
+# production (10 min / 15 min) is set via env vars, e.g. in the k8s ConfigMap.
+cart:
+  nudge-after-seconds: ${CART_NUDGE_AFTER_SECONDS:30}
+  abandon-after-seconds: ${CART_ABANDON_AFTER_SECONDS:90}
+
+# LiteLLM gateway (OpenAI-compatible chat completions API).
+# Override with environment variables at run time. When api-key is blank
+# the app runs in deterministic "demo mode" with no external calls.
+litellm:
+  base-url: ${LITELLM_BASE_URL:https://litellm.invalid/v1}
+  api-key: ${LITELLM_API_KEY:}
+  model: ${LITELLM_MODEL:claude-opus-4-7}
+
+# Actuator — exposes the health endpoint for Kubernetes liveness/readiness probes:
+#   /actuator/health            overall
+#   /actuator/health/liveness   is the app running?
+#   /actuator/health/readiness  is it ready for traffic?
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+
+logging:
+  level:
+    com.marriott.codefest: INFO

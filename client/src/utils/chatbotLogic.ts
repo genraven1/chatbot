@@ -263,14 +263,12 @@ export function handleUserInput(
         );
       } else if (input === 'new-dates') {
         newState.step = 'ask-dates';
-        newState.newCheckIn = null;
+        newState.newCheckIn = '__awaiting-checkin__';
         messages.push(
           createBotTextMessage(
             "I'd love to help you find the perfect dates! Please enter your check-in date (e.g., 2026-08-10 or 08/10/2026):",
           ),
         );
-        newState.step = 'ask-dates';
-        newState.newCheckIn = '__awaiting-checkin__';
       } else if (newState.newCheckIn === '__awaiting-checkin__') {
         const checkIn = parseDateInput(userInput);
         if (checkIn) {

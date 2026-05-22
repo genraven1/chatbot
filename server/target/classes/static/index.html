@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Marriott Bonvoy &mdash; Complete your booking</title>
+    <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- ============ SIGN-IN SCREEN ============ -->
+<section id="loginScreen" class="screen">
+    <div class="login-wrap">
+        <div class="login-brand">Marriott&nbsp;<b>Bonvoy</b><sup>&reg;</sup></div>
+        <div class="login-card">
+            <h1>Sign in to your account</h1>
+            <p class="muted">Choose a demo Bonvoy member to continue to your saved trip.</p>
+            <div id="userList" class="user-list"></div>
+        </div>
+        <button id="resetLink" class="link-btn">&#8635; Reset demo data</button>
+    </div>
+</section>
+
+<!-- ============ CART + CHATBOT SCREEN ============ -->
+<section id="appScreen" class="screen" hidden>
+    <header class="nav">
+        <div class="nav-brand">Marriott&nbsp;<b>Bonvoy</b><sup>&reg;</sup></div>
+        <div class="nav-right">
+            <span id="idleChip" class="idle-chip"></span>
+            <button id="analyticsBtn" class="nav-link">Recovery analytics</button>
+            <span id="navMember" class="nav-member"></span>
+            <button id="signOutBtn" class="nav-link">Sign out</button>
+        </div>
+    </header>
+
+    <main class="cart-main">
+        <h1 class="page-title">Review &amp; complete your booking</h1>
+        <p class="page-sub muted">Your trip is saved. Finish checkout to confirm your stay.</p>
+
+        <div class="cart-card">
+            <div id="hotelBanner" class="hotel-banner"></div>
+            <div class="cart-body">
+                <div class="stay-details">
+                    <h2 id="hotelName"></h2>
+                    <div id="hotelLoc" class="muted hotel-loc"></div>
+                    <div id="hotelRating" class="rating-line"></div>
+                    <dl class="stay-grid">
+                        <dt>Dates</dt><dd id="stayDates"></dd>
+                        <dt>Length</dt><dd id="stayNights"></dd>
+                        <dt>Room</dt><dd id="stayRoom"></dd>
+                        <dt>Guest</dt><dd id="stayGuest"></dd>
+                        <dt>Cancellation</dt><dd id="stayPolicy"></dd>
+                    </dl>
+                </div>
+                <aside class="price-box">
+                    <div id="cartActive">
+                        <div class="price-row"><span id="priceLine"></span><span id="priceRoom"></span></div>
+                        <div class="price-row muted"><span>Taxes &amp; fees</span><span>calculated at property</span></div>
+                        <div class="price-row total"><span>Estimated total</span><span id="priceTotal"></span></div>
+                        <button id="completeBtn" class="primary-btn">Complete Booking</button>
+                        <button id="skipBtn" class="ghost-btn">&#9193; Demo: skip the idle wait</button>
+                    </div>
+                    <div id="cartConfirm" class="cart-confirm" hidden></div>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <!-- chatbot widget -->
+    <div id="chatWidget" class="chat-widget" hidden>
+        <div class="chat-head">
+            <span class="bot-avatar">A</span>
+            <span class="bot-id">
+                <b>Aria</b>
+                <small>Booking Assistant</small>
+            </span>
+            <button id="chatMin" class="chat-min" title="Minimize">&minus;</button>
+        </div>
+        <div id="stepBadge" class="step-badge" hidden></div>
+        <div id="chatLog" class="chat-log"></div>
+        <div id="chatQuick" class="chat-quick"></div>
+        <div class="chat-input">
+            <input id="chatInput" type="text" placeholder="Describe your concern&hellip;" autocomplete="off" disabled/>
+            <button id="chatSend" disabled>Send</button>
+        </div>
+    </div>
+    <button id="chatLauncher" class="chat-launcher" hidden>&#128172;</button>
+</section>
+
+<!-- ============ ANALYTICS SCREEN ============ -->
+<section id="analyticsScreen" class="screen" hidden>
+    <header class="nav">
+        <div class="nav-brand">Recovery Analytics</div>
+        <div class="nav-right">
+            <span id="aiBadge" class="ai-badge"></span>
+            <button id="backBtn" class="nav-link">&larr; Back</button>
+        </div>
+    </header>
+    <main class="analytics-main">
+        <div class="kpis">
+            <div class="kpi"><div class="kpi-val" id="kpiAtRisk">&ndash;</div>
+                <div class="kpi-label">Carts at risk</div>
+                <div class="kpi-tag">Net Rooms Growth opportunity</div></div>
+            <div class="kpi"><div class="kpi-val" id="kpiConvos">&ndash;</div>
+                <div class="kpi-label">Recovery chats started</div>
+                <div class="kpi-tag">Digital Direct engagement</div></div>
+            <div class="kpi"><div class="kpi-val" id="kpiRecovered">&ndash;</div>
+                <div class="kpi-label">Carts recovered</div>
+                <div class="kpi-tag">Net Rooms Growth</div></div>
+            <div class="kpi"><div class="kpi-val" id="kpiRevenue">&ndash;</div>
+                <div class="kpi-label">Revenue recovered</div>
+                <div class="kpi-tag">EBITDA &middot; RevPAR</div></div>
+        </div>
+        <div class="metrics-panel">
+            <h2>Which prompt earns the most &ldquo;yes&rdquo;?</h2>
+            <p class="muted">Per-concern recovery funnel &mdash; tells merchandising which hesitation to fix first.</p>
+            <table class="metrics-table">
+                <thead>
+                <tr>
+                    <th>Concern prompt</th><th>Shown</th><th>Said &ldquo;yes&rdquo;</th>
+                    <th>Yes-rate</th><th>Bookings recovered</th><th>Revenue recovered</th>
+                </tr>
+                </thead>
+                <tbody id="metricsBody"></tbody>
+            </table>
+        </div>
+    </main>
+</section>
+
+<div id="toast" class="toast" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
