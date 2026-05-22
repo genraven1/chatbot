@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cart-recovery
+  labels:
+    app: cart-recovery
+spec:
+  type: ClusterIP
+  selector:
+    app: cart-recovery
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

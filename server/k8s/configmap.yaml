@@ -1,0 +1,17 @@
+# Non-secret configuration. Surfaced into the pod as environment variables;
+# application.yml reads them via ${...} placeholders.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cart-recovery-config
+  labels:
+    app: cart-recovery
+data:
+  # LiteLLM gateway (OpenAI-compatible). Base URL must include /v1.
+  LITELLM_BASE_URL: "https://d1t4hkdc2i746c.cloudfront.net/v1"
+  LITELLM_MODEL: "gemini-2.5-flash-lite"
+
+  # Production cart timing: 10-min nudge, 15-min save window.
+  # (Demo defaults baked into application.yml are 30s / 90s.)
+  CART_NUDGE_AFTER_SECONDS: "600"
+  CART_ABANDON_AFTER_SECONDS: "900"
